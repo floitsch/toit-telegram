@@ -1,84 +1,42 @@
-# MyPackage
+# Telegram
 
-A template repository for creating a Toit package.
+A minimal Telegram client in Toit.
 
-## Toit package
-Use `toit.pkg describe` or `toit pkg describe` (depending on which Toit
-variant you use) to see how https://pkg.toit.io will extract package
-information from your repo when you publish the package.
+This library is a work in progress. If you are missing a feature, please open an issue.
 
-Either add a `name: ...` entry to the package.yaml or change the title
-(first line) of this README to the package name.
+Patches are welcome.
 
-Either add a `description: ...` entry to the package.yaml or ensure
-that the first paragraph of this README can be used as a description.
+## Creating a new bot
 
-## Structure
-Code that should be used by other developers must live in the `src` folder.
+Create the `/newbot` command to create a new bot. '@BotFather' will ask
+you for a name and username, then give you an authentication token.
 
-Examples should live in `examples`. For bigger examples, or examples that
-use more packages, create a subfolder.
+See [the official instructions](https://core.telegram.org/bots/features#botfather).
 
-Tests live in the `tests` folder.
+## Usage
 
-## Copyright
-Don't forget to update the copyright holder in the license files.
-There are (up to) three license files:
-- `LICENSE`: usually MIT
-- `examples/EXAMPLES_LICENSE`: usually BSD0
-- `tests/TESTS_LICENSE`: usually BSD0
+See the [examples](examples) folder for an example.
 
-We recommend to use the following Copyright header in `src` files (with your
-copyright):
+```toit
+import telegram show *
 
-```
-// Copyright (C) 2022 Jane/John Doe
-// Use of this source code is governed by an MIT-style license that can be
-// found in the package's LICENSE file.
-```
+main:
+  // Typically you want to get the token from the environment or
+  // from a separate file to keep the secrets out of the source code.
+  // See the examples folder.
+  client := Client --token="<your token>"
 
-Similarly, you can use the following header for tests and examples:
-```
-// Copyright (C) 2022 Jane/John Doe
-// Use of this source code is governed by a Zero-Clause BSD license that can
-// be found in the tests/TESTS_LICENSE file.
-```
-and
-```
-// Copyright (C) 2022 Jane/John Doe
-// Use of this source code is governed by a Zero-Clause BSD license that can
-// be found in the examples/EXAMPLES_LICENSE file.
+  client.listen: | update/Update |
+    if update is UpdateMessage:
+      message := (update as UpdateMessage).message
+      print "Got message: $message"
+      if message.text == "/start":
+        // It's generally a good idea to reply within the block.
+        // This requires fewer connections to the server.
+        client.send_message --chat_id=message.chat.id "Hello World"
+    else:
+      print "Got update: $update"
 ```
 
-## Local package
-Examples and tests can have different dependencies than the package. This is,
-why they have their own package.yaml/package.lock.
-
-Open the examples (resp. tests) folder with a separate instance of your IDE.
-For vscode you could just write `code examples`.
-
-Install this package as a local package.
-```
-cd examples
-toit.pkg install --local --name=YOUR_PACKAGE_NAME ..
-```
-
-This installs the package located at ".." (here the root of the repository) with
-your package name.
-
-Consequently examples and tests can import the package as if it was installed
-from the Internet. This way, tests and examples use the same syntax as
-users of the package.
-
-## Publish
-Make sure to run `toit.pkg describe` to verify that the data is correct.
-
-This repository comes with a `.github/workflows/publish.xml` file which automatically
-publishes the Toit package for every release. You can just draft a new release on
-Github.
-It is important that the release has a semver tag (like `v1.2.3`).
-
-Alternatively, a package can be published by hand:
-0. Ensure that everything looks good (`toit.pkg describe`).
-1. Add a semver tag (like `v1.0.0`).
-2. Go to https://pkg.toit.io/publish and submit your package.
+## Features and bugs
+Please file feature requests and bugs at the [issue tracker](https://github.com/floitsch/toit-discord/issues).

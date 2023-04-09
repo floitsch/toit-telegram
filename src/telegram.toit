@@ -58,8 +58,8 @@ class Client:
   If $hard is set, closes the connection immediately.
   */
   close --hard/bool=false -> none:
+    closed_ = true
     if handling_updates_ and not hard:
-      closed_ = true
       return
     if client1_:
       client1_.close
@@ -80,25 +80,26 @@ class Client:
   listen [block]:
     last_received_update_id/int? := null
     while not closed_:
-      opt := {
-        "timeout" : 600,
+      catch --trace:
+        opt := {
+          "timeout" : 600,
+        }
+        if last_received_update_id:
+          opt["offset"] = last_received_update_id + 1
+        updates := request_ "getUpdates" opt
+        handling_updates_ = true
+        for i := 0; i < updates.size; i++:
+          if closed_: break
+          last_received_update_id = updates[i]["update_id"]
+          update := Update.from_json updates[i]
+          block.call update
+        handling_updates_ = false
+      // Acknowledge the last received message by requesting one more.
+      request_ "getUpdates" {
+        "offset": last_received_update_id + 1,
+        "limit": 1,
+        "timeout": 0,
       }
-      if last_received_update_id:
-        opt["offset"] = last_received_update_id + 1
-      updates := request_ "getUpdates" opt
-      handling_updates_ = true
-      for i := 0; i < updates.size; i++:
-        if closed_: break
-        last_received_update_id = updates[i]["update_id"]
-        update := Update.from_json updates[i]
-        block.call update
-      handling_updates_ = false
-    // Acknowledge the last received message by requesting one more.
-    request_ "getUpdates" {
-      "offset": last_received_update_id + 1,
-      "limit": 1,
-      "timeout": 0,
-    }
     close
 
   /**
@@ -128,6 +129,7 @@ class Client:
 
     // Wait until at least one client is free.
     clients_semaphore.down
+
     client/http.Client := ?
     client_bit/int := ?
     if clients_in_use_ & 1 == 0:

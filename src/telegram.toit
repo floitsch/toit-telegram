@@ -95,11 +95,12 @@ class Client:
           block.call update
         handling_updates_ = false
       // Acknowledge the last received message by requesting one more.
-      request_ "getUpdates" {
-        "offset": last_received_update_id + 1,
-        "limit": 1,
-        "timeout": 0,
-      }
+      if last_received_update_id:
+        request_ "getUpdates" {
+          "offset": last_received_update_id + 1,
+          "limit": 1,
+          "timeout": 0,
+        }
     close
 
   /**

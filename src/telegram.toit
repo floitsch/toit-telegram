@@ -7,6 +7,7 @@
 
 import encoding.json
 import certificate_roots
+import log
 import net
 import tls
 import http
@@ -36,8 +37,10 @@ class Client:
   handling_updates_/bool := false
   clients_in_use_/int := 0  // Bit mask: 1 = client1, 2 = client2.
   clients_semaphore/monitor.Semaphore := monitor.Semaphore
+  logger_/log.Logger
 
-  constructor --token/string:
+  constructor --token/string --logger/log.Logger=log.default:
+    logger_ = logger.with_name "telegram"
     token_ = token
     network_ = net.open
     client1_ = http.Client.tls network_
@@ -60,7 +63,9 @@ class Client:
   close --hard/bool=false -> none:
     closed_ = true
     if handling_updates_ and not hard:
+      logger_.info "doing a soft close"
       return
+    logger_.info "closing"
     if client1_:
       client1_.close
       client1_ = null
@@ -78,14 +83,16 @@ class Client:
     receive more updates.
   */
   listen [block]:
+    logger_.info "listening"
     last_received_update_id/int? := null
     while not closed_:
-      catch --trace:
+      exception := catch --trace:
         opt := {
           "timeout" : 600,
         }
         if last_received_update_id:
           opt["offset"] = last_received_update_id + 1
+        logger_.debug "requesting updates"
         updates := request_ "getUpdates" opt
         handling_updates_ = true
         for i := 0; i < updates.size; i++:
@@ -101,6 +108,11 @@ class Client:
           "limit": 1,
           "timeout": 0,
         }
+      if exception and not closed_:
+        // If we are not closed, then we should try again.
+        // Otherwise we just close the connection.
+        logger_.error "error" --tags={"exception": exception}
+        sleep --ms=1_000
     close
 
   /**
@@ -116,6 +128,7 @@ class Client:
   Sends a message to the given chat.
   */
   send_message text/string --chat_id/int:
+    logger_.debug "sending message" --tags={"chat_id": chat_id, "text": text}
     return request_ "sendMessage" {
       "chat_id": chat_id,
       "text": text,

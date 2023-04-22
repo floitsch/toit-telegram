@@ -81,10 +81,13 @@ class Client:
   The $block is called with an $Update object for each received update.
   The $block must return as soon as possible, to allow the client to
     receive more updates.
+  If $ignore_old is set, then the client will drop all updates
+    that were received before the client was started.
   */
-  listen [block]:
+  listen --ignore_old/bool=false [block]:
     logger_.info "listening"
     last_received_update_id/int? := null
+    is_first_getupdate/bool := true
     while not closed_:
       exception := catch --trace:
         opt := {
@@ -92,17 +95,28 @@ class Client:
         }
         if last_received_update_id:
           opt["offset"] = last_received_update_id + 1
+        else if ignore_old and is_first_getupdate:
+          opt["offset"] = -1
+          opt["limit"] = 1
+          opt["timeout"] = 0
         logger_.debug "requesting updates"
         updates := request_ "getUpdates" opt
+        is_first_getupdate = false
         handling_updates_ = true
-        for i := 0; i < updates.size; i++:
-          if closed_: break
-          last_received_update_id = updates[i]["update_id"]
-          update := Update.from_json updates[i]
-          block.call update
-        handling_updates_ = false
-      // Acknowledge the last received message by requesting one more.
-      if last_received_update_id:
+        try:
+          for i := 0; i < updates.size; i++:
+            if closed_: break
+            last_received_update_id = updates[i]["update_id"]
+            if ignore_old and (opt.get "offset") == -1:
+              logger_.debug "ignored old updates"
+              // We just requested one update, so we can ignore it.
+              continue
+            update := Update.from_json updates[i]
+            block.call update
+        finally:
+          handling_updates_ = false
+      // Acknowledge the last received message.
+      if closed_ and not exception and last_received_update_id:
         request_ "getUpdates" {
           "offset": last_received_update_id + 1,
           "limit": 1,
@@ -112,7 +126,7 @@ class Client:
         // If we are not closed, then we should try again.
         // Otherwise we just close the connection.
         logger_.error "error" --tags={"exception": exception}
-        sleep --ms=1_000
+        sleep --ms=5_000
     close
 
   /**

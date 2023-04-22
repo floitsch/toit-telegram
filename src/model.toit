@@ -285,3 +285,88 @@ class MessageEntity:
     language = json.get "language"
     custom_emoji_id = json.get "custom_emoji_id"
 
+
+class BotCommand:
+  /**
+  Text of the command.
+  Between 1 and 32 characters long.
+  Can contain only lowercase English letters, digits and underscores.
+  */
+  command/string
+
+  /**
+  Description of the command.
+  Between 1 and 256 characters long.
+  */
+  description/string
+
+  constructor --.command --.description:
+
+  constructor.from_json json/Map:
+    command = json["command"]
+    description = json["description"]
+
+  to_json -> Map:
+    return {
+      "command": command,
+      "description": description,
+    }
+
+class BotCommandScope:
+  static TYPE_DEFAULT ::= "default"
+  static TYPE_ALL_PRIVATE_CHATS ::= "all_private_chats"
+  static TYPE_ALL_GROUP_CHATS ::= "all_group_chats"
+  static TYPE_ALL_CHAT_ADMINISTRATORS ::= "all_chat_administrators"
+  static TYPE_CHAT ::= "chat"
+  static TYPE_CHAT_ADMINISTRATORS ::= "chat_administrators"
+  static TYPE_CHAT_MEMBER ::= "chat_member"
+
+  static DEFAULT ::= BotCommandScope --type=TYPE_DEFAULT
+  static ALL_PRIVATE_CHATS ::= BotCommandScope --type=TYPE_ALL_PRIVATE_CHATS
+  static ALL_GROUP_CHATS ::= BotCommandScope --type=TYPE_ALL_GROUP_CHATS
+  static ALL_CHAT_ADMINISTRATORS ::= BotCommandScope --type=TYPE_ALL_CHAT_ADMINISTRATORS
+
+  /**
+  The type of this scope.
+  See $TYPE_DEFAULT and similar constants.
+  */
+  type/string
+
+  /**
+  The unique identifier of the target chat.
+  Only for $TYPE_CHAT, $TYPE_CHAT_ADMINISTRATORS, and $TYPE_CHAT_MEMBER.
+
+  Type is int for $TYPE_CHAT and $TYPE_CHAT_MEMBER, and int or string for $TYPE_CHAT_ADMINISTRATORS.
+  */
+  chat_id/any
+
+  /**
+  Unique identifier of the target user.
+  Only for $TYPE_CHAT_MEMBER.
+  */
+  user_id/int?
+
+  constructor --.type --.chat_id=null --.user_id=null:
+    if type == TYPE_CHAT or type == TYPE_CHAT_ADMINISTRATORS or type == TYPE_CHAT_MEMBER:
+      if not chat_id: throw "chat_id is required for $type"
+    else if chat_id:
+      throw "chat_id is not allowed for $type"
+
+    if type == TYPE_CHAT_MEMBER:
+      if not user_id:
+        throw "user_id is required for $type"
+    else if user_id:
+      throw "user_id is not allowed for $type"
+
+  constructor.from_json json/Map:
+    type = json["type"]
+    chat_id = json.get "chat_id"
+    user_id = json.get "user_id"
+
+  to_json -> Map:
+    result := {
+      "type": type,
+    }
+    if chat_id: result["chat_id"] = chat_id
+    if user_id: result["user_id"] = user_id
+    return result

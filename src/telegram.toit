@@ -139,6 +139,26 @@ class Client:
     return User.from_json response
 
   /**
+  Sets the bot's commands.
+
+  The $commands list must be a list of $BotCommand objects.
+  Returns true if the setup was successful.
+  */
+  set_my_commands -> bool
+      commands/List
+      --scope/BotCommandScope?=null
+      --language_code/string?=null:
+    if language_code and language_code.size != 2:
+      throw "language_code must be a two letter language code"
+
+    params := {
+      "commands": commands.map: | command/BotCommand | command.to_json,
+    }
+    if scope: params["scope"] = scope
+    if language_code: params["language_code"] = language_code
+    return request_ "setMyCommands" params
+
+  /**
   Sends a message to the given chat.
   */
   send_message text/string --chat_id/int:

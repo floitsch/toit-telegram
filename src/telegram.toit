@@ -161,7 +161,12 @@ class Client:
   /**
   Sends a message to the given chat.
   */
-  send_message text/string --chat_id/int:
+  send_message
+    --chat_id/int text/string
+    --disable_web_page_preview/bool?=null
+    --disable_notification/bool?=null
+    --protect_content/bool?=null
+    --reply_to_message_id/int?:
     logger_.debug "sending message" --tags={"chat_id": chat_id, "text": text}
     return request_ "sendMessage" {
       "chat_id": chat_id,

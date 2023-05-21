@@ -49,6 +49,10 @@ main --token/string:
       print "Got message: $update"
       message := (update as UpdateMessage).message
       if message.chat and message.chat.type == Chat.TYPE_PRIVATE:
-        client.send_message --chat_id=message.chat.id "Of course!"
+        client.send_message "Of course!"
+            --chat_id=message.chat.id
       if mentions_ message my_username:
-        client.send_message --chat_id=message.chat.id "Understood"
+        client.send_message "Understood"
+            --chat_id=message.chat.id
+            --reply_to_message_id=message.id
+

@@ -159,19 +159,19 @@ class Client:
     return request_ "setMyCommands" params
 
   /**
-  Sends a message to the given chat.
+  Sends a message to the given $chat_id.
 
   If $disable_web_page_preview is true, then link previews are disabled.
   If $disable_notification is true, then sends the message silently and users will receive a notification with no sound.
-  If $protect_content is true, then this parameter prevents saving and forwarding.
-  $reply_to_message_id: If the message is a reply, ID of the original message.
+  If $protect_content is true, then the message can not be saved or forwarded.
+  If $reply_to_message_id is given, then marks the $text as reply to that message.
   */
-  send_message
-    --chat_id/int text/string
-    --disable_web_page_preview/bool?=null
-    --disable_notification/bool?=null
-    --protect_content/bool?=null
-    --reply_to_message_id/int?=null:
+  send_message text/string
+      --chat_id/int
+      --disable_web_page_preview/bool?=null
+      --disable_notification/bool?=null
+      --protect_content/bool?=null
+      --reply_to_message_id/int?=null:
     message_object := {
       "chat_id": chat_id,
       "text": text,
@@ -179,7 +179,7 @@ class Client:
 
     if disable_web_page_preview != null: message_object["disable_web_page_preview"] = disable_web_page_preview
     if disable_notification != null: message_object["disable_notification"] = disable_notification
-    if protect_content = != null: message_object["protect_content"] = protect_content
+    if protect_content != null: message_object["protect_content"] = protect_content
     if reply_to_message_id != null: message_object["reply_to_message_id"] = reply_to_message_id
 
     logger_.debug "sending message" --tags=message_object

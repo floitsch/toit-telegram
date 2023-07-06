@@ -4,7 +4,6 @@
 
 import telegram show *
 import host.os
-import monitor
 
 main:
   token := os.env.get "TELEGRAM_TOKEN"
@@ -55,4 +54,3 @@ main --token/string:
         client.send_message "Understood"
             --chat_id=message.chat.id
             --reply_to_message_id=message.id
-

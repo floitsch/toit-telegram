@@ -210,7 +210,7 @@ class Client:
     clients_in_use_ |= client_bit
 
     try:
-      with_timeout --ms=5_000:
+      with_timeout (Duration --m=15):
         response := client.post_json --host=HOST_ --path=path opt
         decoded := json.decode_stream response.body
         if not decoded["ok"]:

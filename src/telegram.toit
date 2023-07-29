@@ -192,6 +192,7 @@ class Client:
       // Make sure we have client2 connected.
       connect_client2_
 
+    logger_.debug "semaphore status: $(clients_semaphore.count) $(%x clients_in_use_)"
     // Wait until at least one client is free.
     clients_semaphore.down
 
@@ -209,11 +210,12 @@ class Client:
     clients_in_use_ |= client_bit
 
     try:
-      response := client.post_json --host=HOST_ --path=path opt
-      decoded := json.decode_stream response.body
-      if not decoded["ok"]:
-        throw "Error: $decoded["description"]"
-      return decoded["result"]
+      with_timeout --ms=5_000:
+        response := client.post_json --host=HOST_ --path=path opt
+        decoded := json.decode_stream response.body
+        if not decoded["ok"]:
+          throw "Error: $decoded["description"]"
+        return decoded["result"]
     finally:
       clients_in_use_ &= ~client_bit
       clients_semaphore.up

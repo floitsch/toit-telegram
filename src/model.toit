@@ -193,12 +193,12 @@ class Message:
     id = json["message_id"]
     from_entry := json.get "from"
     if from_entry:
-      from = User.from_json(json["from"])
+      from = User.from_json json["from"]
     else:
       from = null
     chat_entry := json.get "chat"
     if chat_entry:
-      chat = Chat.from_json(json["chat"])
+      chat = Chat.from_json json["chat"]
     else:
       chat = null
     date_value = json["date"]
@@ -279,7 +279,7 @@ class MessageEntity:
     url = json.get "url"
     user_entry := json.get "user"
     if user_entry:
-      user = User.from_json(user_entry)
+      user = User.from_json user_entry
     else:
       user = null
     language = json.get "language"

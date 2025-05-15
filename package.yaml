@@ -3,7 +3,7 @@ description: A Telegram chat client.
 dependencies:
   certificate_roots:
     url: github.com/toitware/toit-cert-roots
-    version: ^1.6.1
+    version: ^1.10.0
   http:
     url: github.com/toitlang/pkg-http
-    version: ^2.6.0
+    version: ^2.9.0
